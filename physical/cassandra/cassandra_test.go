@@ -19,14 +19,17 @@ func TestCassandraBackend(t *testing.T) {
 		t.Skip("skipping race test in CI pending https://github.com/gocql/gocql/pull/1474")
 	}
 
-	cleanup, hosts := cassandra.PrepareTestContainer(t, "")
+	host, cleanup := cassandra.PrepareTestContainer(t)
 	defer cleanup()
 
 	// Run vault tests
 	logger := logging.NewVaultLogger(log.Debug)
 	b, err := NewCassandraBackend(map[string]string{
-		"hosts":            hosts,
-		"protocol_version": "3",
+		"hosts":                       host.ConnectionURL(),
+		"protocol_version":            "3",
+		"connection_timeout":          "5",
+		"initial_connection_timeout":  "5",
+		"simple_retry_policy_retries": "3",
 	}, logger)
 	if err != nil {
 		t.Fatalf("Failed to create new backend: %v", err)
